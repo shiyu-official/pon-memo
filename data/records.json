@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19T13:09:58.237Z",
+  "updated_at": "2026-04-19T13:10:41.261Z",
   "records": [
     {
       "id": "r_1776569340797_3fqix",
@@ -91,7 +91,11 @@
       "rating": 4,
       "memo": "香りが独特(樽酒特有？)、口によく含んで飲むと独特の味がわかりやすいかも",
       "drunk_at": "2026-04-19T03:47:00.000Z",
-      "store": "yuzawa"
+      "store": "yuzawa",
+      "photos": {
+        "before": "data/photos/r_1776570522036_2lla6_before.webp",
+        "after": "data/photos/r_1776570522036_2lla6_after.webp"
+      }
     },
     {
       "id": "r_1776570682373_zyj44",
