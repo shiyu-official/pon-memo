@@ -6,11 +6,12 @@ const App = (() => {
   // アプリの状態
   const state = {
     master: null,             // master.json
-    records: [],              // [{ id, sake_id, rating, memo, drunk_at, store }]
+    records: [],              // [{ id, sake_id, rating, memo, drunk_at, store, photos? }]
     recordsSha: null,         // GitHub側のsha
     currentStoreId: null,     // 閲覧中の店舗
     currentSakeId: null,      // 詳細画面の対象
-    filter: "all",            // all | unread | done
+    editingRecordId: null,    // 詳細画面で編集中の記録ID (null=新規モード)
+    filter: "all",            // all | unread | done | retired
     search: "",
     syncing: false,
   };
@@ -156,6 +157,7 @@ const App = (() => {
   }
   function goDetail(sakeId) {
     state.currentSakeId = sakeId;
+    state.editingRecordId = null;
     showView("detail");
     renderDetail();
   }
@@ -310,13 +312,21 @@ const App = (() => {
   // ============================================================
   // 描画: 銘柄詳細 / 記録入力
   // ============================================================
+  //
+  // フォーム状態は state.editingRecordId で管理:
+  //   null: 新規記録モード
+  //   (record id): 編集モード
+  //
+  // 写真は 2 枚 (before/after) を photos: { before: File|null|'keep', after: File|null|'keep' } で持つ
+  //   File: 新規選択された画像
+  //   null: 写真なし/削除済み
+  //   'keep': 既存の画像パスをそのまま維持 (編集時)
 
   function renderDetail() {
     const sake = getSake(state.currentSakeId);
     if (!sake) return goBack();
     const container = $("#sake-detail");
     const history = recordsFor(sake.id);
-    // 記録時のデフォルト店舗は「現在閲覧中の店舗」優先、なければ現役エントリの最初、なければavailable_at[0]
     const defaultStore = state.currentStoreId
       || sake.available_at.find((a) => !a.retired_at)?.store
       || sake.available_at[0]?.store
@@ -328,11 +338,15 @@ const App = (() => {
       return `<span class="detail-number-chip${retiredCls}">${esc(store?.name || a.store)}<strong>${esc(a.number)}</strong>${retiredSuffix}</span>`;
     }).join("");
 
-    // 完全引退 (全店で終了) のときはバナー表示
     const fullyRetired = sake.available_at.every((a) => !!a.retired_at);
     const retiredBanner = fullyRetired
       ? `<div class="retired-banner">この銘柄は現在どの店舗でも提供されていません。過去の記録として表示しています。</div>`
       : "";
+
+    // 編集中の記録があればその値をプリセット
+    const editing = state.editingRecordId
+      ? history.find((r) => r.id === state.editingRecordId)
+      : null;
 
     container.innerHTML = `
       <div class="detail-header">
@@ -347,6 +361,10 @@ const App = (() => {
       ${retiredBanner}
 
       <div class="record-section">
+        <div class="record-mode-label" id="record-mode-label">
+          ${editing ? "記録を編集" : "新しい記録"}
+        </div>
+
         <h4>評価</h4>
         <div class="rating-input" id="rating-input">
           ${[1,2,3,4,5].map(n => `<button class="star-btn" data-rating="${n}" aria-label="${n}つ星">★</button>`).join("")}
@@ -354,6 +372,28 @@ const App = (() => {
 
         <h4>感想メモ</h4>
         <textarea class="memo-input" id="memo-input" placeholder="香り、口あたり、余韻、合わせた肴、など自由に。"></textarea>
+
+        <h4>写真</h4>
+        <div class="photo-slots">
+          <div class="photo-slot" data-slot="before">
+            <div class="photo-slot__label">注ぐ前</div>
+            <div class="photo-slot__preview" data-preview></div>
+            <label class="photo-slot__btn">
+              選択
+              <input type="file" accept="image/*" capture="environment" data-file hidden/>
+            </label>
+            <button type="button" class="photo-slot__remove" data-remove hidden>×</button>
+          </div>
+          <div class="photo-slot" data-slot="after">
+            <div class="photo-slot__label">注いだ後</div>
+            <div class="photo-slot__preview" data-preview></div>
+            <label class="photo-slot__btn">
+              選択
+              <input type="file" accept="image/*" capture="environment" data-file hidden/>
+            </label>
+            <button type="button" class="photo-slot__remove" data-remove hidden>×</button>
+          </div>
+        </div>
 
         <h4>飲んだ日時</h4>
         <label class="field">
@@ -363,25 +403,36 @@ const App = (() => {
         <h4>飲んだ店舗</h4>
         <div class="store-select" id="store-select">
           ${(state.master.stores || []).map(s => `
-            <button class="store-chip${s.id === defaultStore ? " active" : ""}" data-store="${esc(s.id)}">${esc(s.name)}</button>
+            <button class="store-chip" data-store="${esc(s.id)}">${esc(s.name)}</button>
           `).join("")}
         </div>
 
         <div class="button-row">
-          <button class="btn btn-primary" id="save-record">この一杯を綴る</button>
+          <button class="btn btn-primary" id="save-record">${editing ? "更新する" : "この一杯を綴る"}</button>
+          ${editing ? `<button class="btn btn-ghost" id="cancel-edit">キャンセル</button>` : ""}
+          ${editing ? `<button class="btn btn-danger" id="delete-record">削除</button>` : ""}
         </div>
       </div>
 
       <div class="history">
-        <h4 style="font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.25em; color: var(--ink-sub); margin-bottom: 10px;">これまでの記録</h4>
+        <h4 class="history-heading">これまでの記録 ${history.length > 0 ? `<span class="history-count">${history.length}</span>` : ""}</h4>
         ${history.length === 0
           ? `<div class="history-empty">まだ記録がありません</div>`
           : history.map((r) => {
               const store = getStore(r.store);
+              const isEditing = r.id === state.editingRecordId;
+              const photos = r.photos || {};
+              const thumbs = [];
+              if (photos.before) thumbs.push(`<img class="history-thumb" src="${esc(photos.before)}" alt="注ぐ前" loading="lazy" onerror="this.style.display='none'"/>`);
+              if (photos.after)  thumbs.push(`<img class="history-thumb" src="${esc(photos.after)}" alt="注いだ後" loading="lazy" onerror="this.style.display='none'"/>`);
+              const thumbsHtml = thumbs.length ? `<div class="history-thumbs">${thumbs.join("")}</div>` : "";
               return `
-                <div class="history-item" data-record="${esc(r.id)}">
-                  <div class="history-date">${esc(fmtDate(r.drunk_at))}<br/><span style="color:var(--ink-mute); font-size:10px;">${esc(store?.name || "")}</span></div>
-                  <div class="history-memo">${esc(r.memo || "(メモなし)")}</div>
+                <div class="history-item ${isEditing ? "history-item--editing" : ""}" data-record="${esc(r.id)}">
+                  <div class="history-date">${esc(fmtDate(r.drunk_at))}<br/><span class="history-store">${esc(store?.name || "")}</span></div>
+                  <div class="history-body">
+                    <div class="history-memo">${esc(r.memo || "(メモなし)")}</div>
+                    ${thumbsHtml}
+                  </div>
                   <div class="history-rating">${"★".repeat(r.rating || 0)}${"☆".repeat(5 - (r.rating || 0))}</div>
                 </div>
               `;
@@ -390,17 +441,21 @@ const App = (() => {
       </div>
     `;
 
-    // フォーム初期値
-    let rating = 0;
-    let memo = "";
-    let drunkAt = nowLocalDatetimeValue();
-    let storeId = defaultStore;
+    // フォーム状態
+    let rating = editing?.rating || 0;
+    let memo = editing?.memo || "";
+    let drunkAt = editing
+      ? toLocalDatetimeValue(editing.drunk_at)
+      : nowLocalDatetimeValue();
+    let storeId = editing?.store || defaultStore;
+    // photos: { before: File | null | 'keep', after: ... }
+    const photos = {
+      before: editing?.photos?.before ? "keep" : null,
+      after:  editing?.photos?.after  ? "keep" : null,
+    };
 
-    // 既存記録がある場合は最新を編集モードっぽく表示（ただし新規追加前提、参考値として）
-    // MVP方針: 新規追加のみ。過去の編集は後回し。
-
-    const ratingEl = $("#rating-input", container);
-    const starBtns = $$(".star-btn", ratingEl);
+    // 星評価
+    const starBtns = $$(".star-btn", container);
     function paintStars() {
       starBtns.forEach((b) => b.classList.toggle("active", Number(b.dataset.rating) <= rating));
     }
@@ -411,65 +466,253 @@ const App = (() => {
         paintStars();
       });
     });
+    paintStars();
 
-    $("#memo-input", container).addEventListener("input", (e) => memo = e.target.value);
+    // メモ
+    const memoEl = $("#memo-input", container);
+    memoEl.value = memo;
+    memoEl.addEventListener("input", (e) => memo = e.target.value);
+
+    // 日時
     const dtInput = $("#drunk-at-input", container);
     dtInput.value = drunkAt;
     dtInput.addEventListener("change", (e) => drunkAt = e.target.value);
 
+    // 店舗選択
     $$(".store-chip", container).forEach((chip) => {
+      chip.classList.toggle("active", chip.dataset.store === storeId);
       chip.addEventListener("click", () => {
         storeId = chip.dataset.store;
         $$(".store-chip", container).forEach((c) => c.classList.toggle("active", c === chip));
       });
     });
 
-    $("#save-record", container).addEventListener("click", async () => {
-      if (rating === 0 && !memo.trim()) {
-        if (!confirm("評価もメモも入っていませんが、「呑んだ」記録として保存しますか？")) return;
+    // 写真スロット
+    $$(".photo-slot", container).forEach((slot) => {
+      const slotName = slot.dataset.slot;       // 'before' or 'after'
+      const fileInput = $("[data-file]", slot);
+      const preview = $("[data-preview]", slot);
+      const removeBtn = $("[data-remove]", slot);
+
+      function updatePreview() {
+        const p = photos[slotName];
+        preview.innerHTML = "";
+        removeBtn.hidden = true;
+        if (!p) return;
+
+        let url = null;
+        if (p === "keep" && editing?.photos?.[slotName]) {
+          // 既存画像: リポジトリからの相対パス
+          url = editing.photos[slotName];
+        } else if (p instanceof File || p instanceof Blob) {
+          url = URL.createObjectURL(p);
+        }
+        if (url) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.className = "photo-preview-img";
+          preview.appendChild(img);
+          removeBtn.hidden = false;
+        }
       }
+
+      fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const webpBlob = await resizeToWebp(file);
+          photos[slotName] = webpBlob;
+          updatePreview();
+        } catch (err) {
+          toast("画像の変換に失敗しました: " + err.message, "error");
+        }
+        e.target.value = "";
+      });
+
+      removeBtn.addEventListener("click", () => {
+        photos[slotName] = null;
+        updatePreview();
+      });
+
+      updatePreview();
+    });
+
+    // 保存/更新ボタン
+    $("#save-record", container).addEventListener("click", async () => {
+      await saveRecord({
+        recordId: editing?.id || null,
+        sakeId: sake.id,
+        rating, memo: memo.trim(), drunkAt, storeId, photos,
+        existing: editing,
+      });
+    });
+
+    // キャンセル (編集モード時のみ)
+    if (editing) {
+      $("#cancel-edit", container).addEventListener("click", () => {
+        state.editingRecordId = null;
+        renderDetail();
+      });
+      $("#delete-record", container).addEventListener("click", async () => {
+        if (!confirm("この記録を削除しますか？")) return;
+        await deleteRecordFlow(editing.id);
+      });
+    }
+
+    // 履歴タップで編集モードへ
+    $$(".history-item", container).forEach((item) => {
+      item.addEventListener("click", () => {
+        const id = item.dataset.record;
+        if (state.editingRecordId === id) {
+          // 同じ記録をもう一度タップ -> キャンセル
+          state.editingRecordId = null;
+        } else {
+          state.editingRecordId = id;
+        }
+        renderDetail();
+        // 編集モード時は上部フォームにスクロール
+        if (state.editingRecordId) {
+          $(".record-section", container)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+  }
+
+  // 記録の保存 (新規/編集共通)
+  async function saveRecord({ recordId, sakeId, rating, memo, drunkAt, storeId, photos, existing }) {
+    if (rating === 0 && !memo && !photos.before && !photos.after) {
+      if (!confirm("評価もメモも写真も入っていませんが、「呑んだ」記録として保存しますか？")) return;
+    }
+
+    const isEdit = !!recordId;
+    const id = recordId || genId();
+    const saveBtn = $("#save-record");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "保存中...";
+
+    try {
+      // 写真のアップロード (先に画像、あとでrecords.json)
+      const photoResults = { before: null, after: null };
+      for (const slot of ["before", "after"]) {
+        const p = photos[slot];
+        if (p === "keep" && existing?.photos?.[slot]) {
+          photoResults[slot] = existing.photos[slot];
+        } else if (p instanceof Blob) {
+          // アップロード
+          const path = `data/photos/${id}_${slot}.webp`;
+          if (Storage.hasGitHubConfig()) {
+            saveBtn.textContent = `写真アップロード中 (${slot})...`;
+            await GitHubAPI.putBinary(path, p);
+          }
+          photoResults[slot] = path;
+        } else {
+          // null -> なし
+          photoResults[slot] = null;
+        }
+      }
+
       const record = {
-        id: genId(),
-        sake_id: sake.id,
-        rating: rating,
-        memo: memo.trim(),
+        id,
+        sake_id: sakeId,
+        rating,
+        memo,
         drunk_at: localDatetimeToISO(drunkAt),
         store: storeId,
       };
+      // photos は何かあるときだけ追加
+      if (photoResults.before || photoResults.after) {
+        record.photos = {};
+        if (photoResults.before) record.photos.before = photoResults.before;
+        if (photoResults.after)  record.photos.after  = photoResults.after;
+      }
+
       Storage.addRecord(record);
       state.records = Storage.getRecords().records;
       Storage.addPending(record.id);
 
-      toast("保存しました");
-
-      // 同期
+      saveBtn.textContent = "records.json 同期中...";
       if (Storage.hasGitHubConfig()) {
-        syncToGitHub().catch((e) => console.error(e));
+        await syncToGitHub();
       }
+      toast(isEdit ? "更新しました" : "保存しました");
+    } catch (e) {
+      console.error(e);
+      toast("保存失敗: " + e.message, "error");
+    } finally {
+      saveBtn.disabled = false;
+    }
 
-      // 戻って一覧を更新
-      if (state.currentStoreId) {
-        showView("store");
-        renderStore();
+    // 編集モード解除して再描画
+    state.editingRecordId = null;
+
+    // 編集完了時は一覧に戻らず詳細に留まる (続けて編集できるように)
+    if (isEdit) {
+      renderDetail();
+    } else if (state.currentStoreId) {
+      showView("store");
+      renderStore();
+    } else {
+      goHome();
+    }
+  }
+
+  async function deleteRecordFlow(recordId) {
+    Storage.deleteRecord(recordId);
+    state.records = Storage.getRecords().records;
+    Storage.addPending("__deleted__" + recordId);
+    if (Storage.hasGitHubConfig()) {
+      try { await syncToGitHub(); } catch (e) { console.error(e); }
+    }
+    state.editingRecordId = null;
+    renderDetail();
+    toast("削除しました");
+  }
+
+  // 画像を長辺1200pxにリサイズしてWebPに変換
+  async function resizeToWebp(file, maxSize = 1200, quality = 0.75) {
+    const img = await loadImage(file);
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (w > maxSize || h > maxSize) {
+      if (w >= h) {
+        h = Math.round(h * (maxSize / w));
+        w = maxSize;
       } else {
-        goHome();
+        w = Math.round(w * (maxSize / h));
+        h = maxSize;
       }
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error("toBlob returned null")),
+        "image/webp",
+        quality,
+      );
     });
+  }
 
-    // 履歴タップで削除（簡易）
-    $$(".history-item", container).forEach((item) => {
-      item.addEventListener("click", () => {
-        const id = item.dataset.record;
-        if (confirm("この記録を削除しますか？")) {
-          Storage.deleteRecord(id);
-          state.records = Storage.getRecords().records;
-          Storage.addPending("__deleted__" + id);  // 削除フラグ
-          if (Storage.hasGitHubConfig()) syncToGitHub().catch(console.error);
-          renderDetail();
-          toast("削除しました");
-        }
-      });
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("画像読み込み失敗")); };
+      img.src = url;
     });
+  }
+
+  // ISO -> "YYYY-MM-DDTHH:MM" (ローカルタイム)
+  function toLocalDatetimeValue(iso) {
+    if (!iso) return nowLocalDatetimeValue();
+    const d = new Date(iso);
+    if (isNaN(d)) return nowLocalDatetimeValue();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   // ============================================================

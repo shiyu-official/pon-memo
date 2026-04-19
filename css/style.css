@@ -693,14 +693,6 @@ textarea.memo-input:focus { outline: 2px solid var(--accent); outline-offset: -1
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
-.history-memo {
-  font-family: var(--font-serif);
-  font-size: 13px;
-  color: var(--ink-sub);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .history-rating {
   font-size: 12px;
   color: var(--star);
@@ -710,6 +702,155 @@ textarea.memo-input:focus { outline: 2px solid var(--accent); outline-offset: -1
   color: var(--ink-mute);
   font-size: 12px;
   padding: 8px 0;
+}
+
+/* ============================================================
+   記録フォーム (新規/編集)
+   ============================================================ */
+
+.record-mode-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-mute);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 16px;
+}
+
+/* 写真スロット */
+.photo-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.photo-slot {
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  min-height: 140px;
+  justify-content: center;
+}
+.photo-slot__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-mute);
+}
+.photo-slot__preview {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.photo-slot__preview:empty { display: none; }
+.photo-preview-img {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 3px;
+  display: block;
+}
+.photo-slot__btn {
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-sub);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+.photo-slot__btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.photo-slot__remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 履歴アイテム拡張 */
+.history-heading {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--ink-sub);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.history-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  letter-spacing: 0;
+}
+.history-store {
+  color: var(--ink-mute);
+  font-size: 10px;
+}
+.history-item {
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+}
+.history-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.history-memo {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink-sub);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.4;
+}
+.history-thumbs {
+  display: flex;
+  gap: 4px;
+}
+.history-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg);
+}
+
+/* 編集中アイテムの強調表示 */
+.history-item--editing {
+  background: color-mix(in oklab, var(--accent) 6%, transparent);
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
+  margin-left: -8px;
 }
 
 /* ============================================================

@@ -115,5 +115,56 @@ const GitHubAPI = (() => {
       const data = await resp.json();
       return { sha: data.content.sha };
     },
+
+    // 任意のバイナリファイルをPUT (画像用)
+    // path: リポジトリ相対パス (例: "data/photos/r_xxx_before.webp")
+    // blob: Blob object
+    async putBinary(path, blob) {
+      const c = cfg();
+      if (!c.owner || !c.repo || !c.token) {
+        throw new Error("GitHub未設定");
+      }
+      // Blob -> base64
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      const chunkSize = 8192;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(
+          null,
+          bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
+        );
+      }
+      const base64 = btoa(binary);
+
+      // 既存ファイルがあればsha取得 (PUTでsha必須)
+      let existingSha = null;
+      try {
+        const probe = await fetch(apiUrl(path), { headers: headers() });
+        if (probe.ok) {
+          const data = await probe.json();
+          existingSha = data.sha;
+        }
+      } catch (e) { /* 新規ファイル */ }
+
+      const body = {
+        message: `Upload ${path}`,
+        content: base64,
+        branch: c.branch || "main",
+      };
+      if (existingSha) body.sha = existingSha;
+
+      const resp = await fetch(apiUrl(path), {
+        method: "PUT",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`GitHub API ${resp.status}: ${text}`);
+      }
+      const data = await resp.json();
+      return { sha: data.content.sha, path: data.content.path };
+    },
   };
 })();
