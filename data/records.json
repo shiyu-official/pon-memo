@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19T13:03:29.745Z",
+  "updated_at": "2026-04-19T13:04:01.233Z",
   "records": [
     {
       "id": "r_1776569340797_3fqix",
@@ -15,7 +15,11 @@
       "rating": 4,
       "memo": "引きがめちゃくちゃ早い、辛さMAXだけどそこまで辛さは感じない",
       "drunk_at": "2026-04-19T03:30:00.000Z",
-      "store": "yuzawa"
+      "store": "yuzawa",
+      "photos": {
+        "before": "data/photos/r_1776569449857_dbycs_before.webp",
+        "after": "data/photos/r_1776569449857_dbycs_after.webp"
+      }
     },
     {
       "id": "r_1776569687108_botp2",
