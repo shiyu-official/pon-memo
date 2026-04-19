@@ -4,7 +4,7 @@
  * 画像 (銘柄サムネ) は stale-while-revalidate。
  */
 
-const VERSION = "v1";
+const VERSION = "v3";
 const SHELL_CACHE = `shell-${VERSION}`;
 const IMG_CACHE = `img-${VERSION}`;
 
@@ -45,6 +45,21 @@ self.addEventListener("fetch", (event) => {
 
   // ぽんしゅ館の画像は stale-while-revalidate
   if (url.hostname.includes("ponshukan.com")) {
+    event.respondWith(
+      caches.open(IMG_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        const fetched = fetch(req).then((resp) => {
+          if (resp.ok) cache.put(req, resp.clone());
+          return resp;
+        }).catch(() => cached);
+        return cached || fetched;
+      })
+    );
+    return;
+  }
+
+  // 自撮影した写真 (data/photos/) も stale-while-revalidate
+  if (url.origin === location.origin && url.pathname.includes("/data/photos/")) {
     event.respondWith(
       caches.open(IMG_CACHE).then(async (cache) => {
         const cached = await cache.match(req);
