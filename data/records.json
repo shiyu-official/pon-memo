@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19T13:07:24.149Z",
+  "updated_at": "2026-04-19T13:07:56.536Z",
   "records": [
     {
       "id": "r_1776569340797_3fqix",
@@ -91,7 +91,11 @@
       "rating": 5,
       "memo": "スッキリさと口に含んだ甘さが良くて飲みやすく美味い、甘さと引きのバランスがいいのかも",
       "drunk_at": "2026-04-19T03:50:00.000Z",
-      "store": "yuzawa"
+      "store": "yuzawa",
+      "photos": {
+        "before": "data/photos/r_1776570682373_zyj44_before.webp",
+        "after": "data/photos/r_1776570682373_zyj44_after.webp"
+      }
     },
     {
       "id": "r_1776570883414_cjcm7",
