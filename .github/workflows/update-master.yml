@@ -1,0 +1,55 @@
+name: Update master
+
+# ぽんしゅ館の銘柄マスタ（data/master.json）を定期的にスクレイピングして更新する。
+# - 月1回 (毎月1日 日本時間 12:00 = UTC 03:00) に自動実行
+# - 手動実行も可能 (Actions タブから "Run workflow" ボタン)
+# - 差分があれば自動コミット、なければ何もしない
+
+on:
+  schedule:
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run master builder
+        run: python scripts/build_master.py | tee /tmp/master-diff.log
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet data/master.json; then
+            echo "No changes to master.json"
+            exit 0
+          fi
+
+          git config user.name "ponshukan-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 差分サマリをコミットメッセージに含める
+          SUMMARY=$(grep -E "^(✨|🍂|🌱|🔀)" /tmp/master-diff.log | head -20 || true)
+
+          git add data/master.json
+          if [ -n "$SUMMARY" ]; then
+            git commit -m "chore: update master.json [skip ci]" -m "$SUMMARY"
+          else
+            git commit -m "chore: update master.json [skip ci]"
+          fi
+          git push
