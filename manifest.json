@@ -1,0 +1,20 @@
+{
+  "name": "利き酒手帖 — ぽんしゅ館",
+  "short_name": "利き酒手帖",
+  "description": "ぽんしゅ館の唎酒番所で呑んだ銘柄を記録する個人用ツール",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5efe4",
+  "theme_color": "#1a3a5c",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

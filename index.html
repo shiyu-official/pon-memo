@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a3a5c" />
+  <title>利き酒手帖 — ぽんしゅ館</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- 游明朝 (system-fallback) と Noto Serif JP を混ぜ、本文にはNoto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Shippori+Mincho+B1:wght@700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <button class="header-link header-back" data-nav="back" aria-label="戻る" hidden>←</button>
+    <div class="header-title">
+      <span class="title-kanji">利き酒手帖</span>
+      <span class="title-sub" id="header-sub">ぽんしゅ館</span>
+    </div>
+    <button class="header-link header-settings" data-nav="settings" aria-label="設定">⚙</button>
+  </header>
+
+  <main id="app">
+    <!-- ホーム画面: 店舗選択 -->
+    <section class="view view-home" data-view="home">
+      <div class="home-hero">
+        <div class="hero-mark">呑</div>
+        <h1 class="hero-title">利き酒手帖</h1>
+        <p class="hero-lead">今日までに呑んだ一杯を、手帖に綴る。</p>
+      </div>
+
+      <h2 class="section-label"><span>店舗をえらぶ</span></h2>
+      <div class="store-list" id="store-list">
+        <!-- JSで挿入 -->
+      </div>
+
+      <div class="sync-status" id="sync-status" aria-live="polite">
+        <span class="sync-dot"></span>
+        <span class="sync-text">読み込み中…</span>
+      </div>
+    </section>
+
+    <!-- 店舗別銘柄一覧 -->
+    <section class="view view-store" data-view="store" hidden>
+      <div class="store-header">
+        <h2 class="store-title" id="store-title">—</h2>
+        <div class="store-progress">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="progress-text"><span id="progress-count">0 / 0</span> 銘柄</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input type="search" class="search-input" id="search-input" placeholder="銘柄・酒蔵を検索" />
+        <div class="filter-tabs" role="tablist">
+          <button class="filter-tab active" data-filter="all">すべて</button>
+          <button class="filter-tab" data-filter="unread">未呑</button>
+          <button class="filter-tab" data-filter="done">呑了</button>
+          <button class="filter-tab" data-filter="retired">終了</button>
+        </div>
+      </div>
+
+      <ul class="sake-list" id="sake-list">
+        <!-- JSで挿入 -->
+      </ul>
+    </section>
+
+    <!-- 銘柄詳細 / 記録 -->
+    <section class="view view-detail" data-view="detail" hidden>
+      <article class="sake-detail" id="sake-detail">
+        <!-- JSで挿入 -->
+      </article>
+    </section>
+
+    <!-- 設定 -->
+    <section class="view view-settings" data-view="settings" hidden>
+      <h2 class="section-heading">設定</h2>
+
+      <div class="settings-card">
+        <h3>GitHub 同期</h3>
+        <p class="settings-desc">
+          Personal Access Token (PAT) を設定すると、記録が自動で GitHub にコミットされます。
+          トークンはこの端末のブラウザにのみ保存されます。
+        </p>
+        <label class="field">
+          <span class="field-label">Owner / Repo</span>
+          <input type="text" id="cfg-repo" placeholder="yourname/ponshukan-tracker" />
+        </label>
+        <label class="field">
+          <span class="field-label">Branch</span>
+          <input type="text" id="cfg-branch" placeholder="main" />
+        </label>
+        <label class="field">
+          <span class="field-label">Personal Access Token</span>
+          <input type="password" id="cfg-token" placeholder="ghp_xxxx..." autocomplete="off" />
+        </label>
+        <div class="button-row">
+          <button class="btn btn-primary" id="cfg-save">保存</button>
+          <button class="btn btn-ghost" id="cfg-test">接続テスト</button>
+        </div>
+        <p class="settings-note">
+          PATの作り方:
+          GitHub → Settings → Developer settings → Personal access tokens →
+          <strong>Fine-grained tokens</strong> で、このリポジトリへの
+          <code>Contents: Read and write</code> 権限を付与したトークンを作成。
+        </p>
+      </div>
+
+      <div class="settings-card">
+        <h3>バックアップ</h3>
+        <p class="settings-desc">記録データをJSONとしてダウンロード・取り込み。</p>
+        <div class="button-row">
+          <button class="btn btn-ghost" id="cfg-export">エクスポート</button>
+          <label class="btn btn-ghost">
+            インポート
+            <input type="file" id="cfg-import" accept=".json" hidden />
+          </label>
+          <button class="btn btn-danger" id="cfg-clear">全削除</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>アプリについて</h3>
+        <p class="settings-desc">
+          ぽんしゅ館の唎酒番所で呑んだ銘柄を記録するための個人用ツール。
+          公式HPの銘柄一覧をもとにマスタを作っています。
+          <br /><br />
+          <span class="muted">マスタ更新日: <span id="master-updated">—</span></span><br />
+          <span class="muted">銘柄総数: <span id="master-count">—</span></span>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- トースト -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <!-- モジュール読み込み -->
+  <script src="js/storage.js"></script>
+  <script src="js/github-api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
