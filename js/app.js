@@ -380,7 +380,7 @@ const App = (() => {
             <div class="photo-slot__preview" data-preview></div>
             <label class="photo-slot__btn">
               選択
-              <input type="file" accept="image/*" capture="environment" data-file hidden/>
+              <input type="file" accept="image/*" data-file hidden/>
             </label>
             <button type="button" class="photo-slot__remove" data-remove hidden>×</button>
           </div>
@@ -389,7 +389,7 @@ const App = (() => {
             <div class="photo-slot__preview" data-preview></div>
             <label class="photo-slot__btn">
               選択
-              <input type="file" accept="image/*" capture="environment" data-file hidden/>
+              <input type="file" accept="image/*" data-file hidden/>
             </label>
             <button type="button" class="photo-slot__remove" data-remove hidden>×</button>
           </div>
