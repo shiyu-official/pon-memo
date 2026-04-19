@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19T13:06:50.197Z",
+  "updated_at": "2026-04-19T13:07:24.149Z",
   "records": [
     {
       "id": "r_1776569340797_3fqix",
@@ -51,7 +51,11 @@
       "rating": 4,
       "memo": "口元には多少残るけどしっかり引く、辛さは普通程度",
       "drunk_at": "2026-04-19T03:38:00.000Z",
-      "store": "yuzawa"
+      "store": "yuzawa",
+      "photos": {
+        "before": "data/photos/r_1776569972391_mssa1_before.webp",
+        "after": "data/photos/r_1776569972391_mssa1_after.webp"
+      }
     },
     {
       "id": "r_1776570172058_3bwh2",
