@@ -21,7 +21,7 @@
       <span class="title-kanji">利き酒手帖</span>
       <span class="title-sub" id="header-sub">ぽんしゅ館</span>
     </div>
-    <button class="header-link header-settings" data-nav="settings" aria-label="設定">⚙</button>
+    <span class="header-link header-spacer" aria-hidden="true"></span>
   </header>
 
   <main id="app">
@@ -74,6 +74,20 @@
       <article class="sake-detail" id="sake-detail">
         <!-- JSで挿入 -->
       </article>
+    </section>
+
+    <!-- 記録 (タイムライン / お気に入り) -->
+    <section class="view view-journal" data-view="journal" hidden>
+      <h2 class="section-heading">記録を振り返る</h2>
+
+      <div class="journal-tabs" role="tablist">
+        <button class="journal-tab active" data-journal="timeline">タイムライン</button>
+        <button class="journal-tab" data-journal="favorites">お気に入り</button>
+      </div>
+
+      <div class="journal-content" id="journal-content">
+        <!-- JSで挿入 -->
+      </div>
     </section>
 
     <!-- 設定 -->
@@ -135,6 +149,37 @@
       </div>
     </section>
   </main>
+
+  <!-- 下部タブバー -->
+  <nav class="tab-bar" role="navigation" aria-label="メインナビ">
+    <button class="tab-bar__btn" data-tab="home" aria-label="ホーム">
+      <span class="tab-bar__icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/>
+        </svg>
+      </span>
+      <span class="tab-bar__label">ホーム</span>
+    </button>
+    <button class="tab-bar__btn" data-tab="journal" aria-label="記録">
+      <span class="tab-bar__icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 1 4 17.5v-13z"/>
+          <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20"/>
+          <path d="M9 7h7M9 11h5"/>
+        </svg>
+      </span>
+      <span class="tab-bar__label">記録</span>
+    </button>
+    <button class="tab-bar__btn" data-tab="settings" aria-label="設定">
+      <span class="tab-bar__icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </span>
+      <span class="tab-bar__label">設定</span>
+    </button>
+  </nav>
 
   <!-- トースト -->
   <div class="toast" id="toast" aria-live="polite"></div>
