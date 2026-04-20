@@ -14,9 +14,10 @@ const App = (() => {
     filter: "all",            // all | unread | done | retired
     search: "",
     syncing: false,
-    journalMode: "timeline",    // timeline | favorites
-    favoritesThreshold: 4,      // お気に入りの☆しきい値
-    detailReturnTo: null,       // 詳細から戻る先: "journal" | null (デフォルト: 店舗/ホーム)
+    journalMode: "timeline",         // timeline | filter
+    filterRatingMin: 0,              // 絞り込みの☆下限 (0 = すべて)
+    filterBreweryId: "",             // 絞り込みの酒蔵ID ("" = すべて)
+    detailReturnTo: null,            // 詳細から戻る先: "journal" | null
   };
 
   // ============================================================
@@ -451,8 +452,8 @@ const App = (() => {
               const isEditing = r.id === state.editingRecordId;
               const photos = r.photos || {};
               const thumbs = [];
-              if (photos.before) thumbs.push(`<img class="history-thumb" src="${esc(photos.before)}" alt="注ぐ前" loading="lazy" onerror="this.style.display='none'"/>`);
-              if (photos.after)  thumbs.push(`<img class="history-thumb" src="${esc(photos.after)}" alt="注いだ後" loading="lazy" onerror="this.style.display='none'"/>`);
+              if (photos.before) thumbs.push(`<img class="history-thumb zoomable" src="${esc(photos.before)}" alt="注ぐ前" loading="lazy" onerror="this.style.display='none'"/>`);
+              if (photos.after)  thumbs.push(`<img class="history-thumb zoomable" src="${esc(photos.after)}" alt="注いだ後" loading="lazy" onerror="this.style.display='none'"/>`);
               const thumbsHtml = thumbs.length ? `<div class="history-thumbs">${thumbs.join("")}</div>` : "";
               return `
                 <div class="history-item ${isEditing ? "history-item--editing" : ""}" data-record="${esc(r.id)}">
@@ -538,7 +539,8 @@ const App = (() => {
         if (url) {
           const img = document.createElement("img");
           img.src = url;
-          img.className = "photo-preview-img";
+          img.className = "photo-preview-img zoomable";
+          // Blob URL はそのまま拡大可能、相対パスもそのまま
           preview.appendChild(img);
           removeBtn.hidden = false;
         }
@@ -589,16 +591,16 @@ const App = (() => {
 
     // 履歴タップで編集モードへ
     $$(".history-item", container).forEach((item) => {
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (e) => {
+        // 画像クリックはライトボックスが処理するので履歴タップから除外
+        if (e.target.closest(".history-thumb")) return;
         const id = item.dataset.record;
         if (state.editingRecordId === id) {
-          // 同じ記録をもう一度タップ -> キャンセル
           state.editingRecordId = null;
         } else {
           state.editingRecordId = id;
         }
         renderDetail();
-        // 編集モード時は上部フォームにスクロール
         if (state.editingRecordId) {
           $(".record-section", container)?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -766,7 +768,7 @@ const App = (() => {
     if (state.journalMode === "timeline") {
       renderTimeline(container);
     } else {
-      renderFavorites(container);
+      renderFilter(container);
     }
   }
 
@@ -809,12 +811,13 @@ const App = (() => {
 
     // カードクリックで銘柄詳細へ (編集可能にする)
     $$(".timeline-card", container).forEach((card) => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".timeline-card__thumb")) return;
         const sakeId = card.dataset.sake;
         const recordId = card.dataset.record;
         state.detailReturnTo = "journal";
         state.currentSakeId = sakeId;
-        state.editingRecordId = recordId;  // タップで編集モードに直行
+        state.editingRecordId = recordId;
         showView("detail");
         renderDetail();
       });
@@ -826,8 +829,8 @@ const App = (() => {
     const store = getStore(record.store);
     const photos = record.photos || {};
     const thumbs = [];
-    if (photos.before) thumbs.push(`<img class="timeline-card__thumb" src="${esc(photos.before)}" loading="lazy" onerror="this.style.display='none'"/>`);
-    if (photos.after)  thumbs.push(`<img class="timeline-card__thumb" src="${esc(photos.after)}" loading="lazy" onerror="this.style.display='none'"/>`);
+    if (photos.before) thumbs.push(`<img class="timeline-card__thumb zoomable" src="${esc(photos.before)}" loading="lazy" onerror="this.style.display='none'"/>`);
+    if (photos.after)  thumbs.push(`<img class="timeline-card__thumb zoomable" src="${esc(photos.after)}" loading="lazy" onerror="this.style.display='none'"/>`);
     const thumbsHtml = thumbs.length ? `<div class="timeline-card__thumbs">${thumbs.join("")}</div>` : "";
     const rating = record.rating || 0;
     const memo = record.memo || "";
@@ -855,23 +858,18 @@ const App = (() => {
     `;
   }
 
-  function renderFavorites(container) {
-    const threshold = state.favoritesThreshold;
+  function renderFilter(container) {
+    const ratingMin = state.filterRatingMin;
+    const breweryId = state.filterBreweryId;
 
-    // 銘柄ごとに集計: 最高☆, 記録数, 最新メモ, 最新日時
-    const bySake = new Map();  // sake_id -> { maxRating, count, latestMemo, latestDate, bestRecord }
+    // 銘柄ごとに集計
+    const bySake = new Map();
     for (const r of state.records) {
       const entry = bySake.get(r.sake_id) || {
-        maxRating: 0,
-        count: 0,
-        latestMemo: "",
-        latestDate: "",
-        photos: null,
+        maxRating: 0, count: 0, latestMemo: "", latestDate: "", photos: null,
       };
       entry.count += 1;
-      if ((r.rating || 0) > entry.maxRating) {
-        entry.maxRating = r.rating || 0;
-      }
+      if ((r.rating || 0) > entry.maxRating) entry.maxRating = r.rating || 0;
       if ((r.drunk_at || "") > entry.latestDate) {
         entry.latestDate = r.drunk_at || "";
         entry.latestMemo = r.memo || "";
@@ -880,12 +878,27 @@ const App = (() => {
       bySake.set(r.sake_id, entry);
     }
 
-    // しきい値以上を抽出
+    // 酒蔵プルダウン用: 記録がある酒蔵を一覧化
+    // key: brewery名 (酒蔵を一意に識別するID相当) / value: { name, count }
+    const breweryStats = new Map();
+    for (const [sakeId] of bySake) {
+      const sake = getSake(sakeId);
+      if (!sake) continue;
+      const s = breweryStats.get(sake.brewery) || { name: sake.brewery, count: 0 };
+      s.count += bySake.get(sakeId).count;
+      breweryStats.set(sake.brewery, s);
+    }
+    const breweryList = Array.from(breweryStats.values())
+      .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+    // 条件で絞る
     const items = [];
     for (const [sakeId, entry] of bySake) {
-      if (entry.maxRating >= threshold) {
-        items.push({ sakeId, ...entry });
-      }
+      if (entry.maxRating < ratingMin) continue;
+      const sake = getSake(sakeId);
+      if (!sake) continue;
+      if (breweryId && sake.brewery !== breweryId) continue;
+      items.push({ sakeId, ...entry });
     }
 
     // ☆降順 → 回数降順
@@ -895,31 +908,50 @@ const App = (() => {
     });
 
     const head = `
-      <div class="favorites-filter">
-        <span class="favorites-filter__label">☆評価</span>
-        <button class="chip ${threshold === 3 ? "chip--active" : ""}" data-threshold="3">3以上</button>
-        <button class="chip ${threshold === 4 ? "chip--active" : ""}" data-threshold="4">4以上</button>
-        <button class="chip ${threshold === 5 ? "chip--active" : ""}" data-threshold="5">5のみ</button>
+      <div class="filter-panel">
+        <div class="filter-row">
+          <span class="filter-row__label">☆評価</span>
+          <div class="filter-row__body">
+            <button class="chip ${ratingMin === 0 ? "chip--active" : ""}" data-rating="0">すべて</button>
+            <button class="chip ${ratingMin === 3 ? "chip--active" : ""}" data-rating="3">3以上</button>
+            <button class="chip ${ratingMin === 4 ? "chip--active" : ""}" data-rating="4">4以上</button>
+            <button class="chip ${ratingMin === 5 ? "chip--active" : ""}" data-rating="5">5のみ</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-row__label">酒蔵</span>
+          <div class="filter-row__body">
+            <select class="filter-select" data-brewery>
+              <option value="">すべて (${breweryStats.size})</option>
+              ${breweryList.map((b) =>
+                `<option value="${esc(b.name)}" ${b.name === breweryId ? "selected" : ""}>${esc(b.name)} (${b.count})</option>`
+              ).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="filter-result">${items.length} 銘柄 / 全 ${bySake.size} 銘柄</div>
       </div>
     `;
 
     if (items.length === 0) {
       container.innerHTML = head + `<div class="journal-empty">
-        <p>☆${threshold} 以上の記録はまだありません。</p>
+        <p>条件に一致する記録がありません。</p>
       </div>`;
-      wireFavoritesFilter(container);
+      wireFilterPanel(container);
       return;
     }
 
     container.innerHTML = head + `
       <div class="favorites-list">
-        ${items.map((it) => renderFavoriteCard(it)).join("")}
+        ${items.map((it) => renderFilterCard(it)).join("")}
       </div>
     `;
 
     // 銘柄カードタップで詳細へ
     $$(".favorite-card", container).forEach((card) => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", (e) => {
+        // 画像クリックはライトボックスに譲る
+        if (e.target.closest(".favorite-card__img")) return;
         state.detailReturnTo = "journal";
         state.currentSakeId = card.dataset.sake;
         state.editingRecordId = null;
@@ -928,19 +960,19 @@ const App = (() => {
       });
     });
 
-    wireFavoritesFilter(container);
+    wireFilterPanel(container);
   }
 
-  function renderFavoriteCard(item) {
+  function renderFilterCard(item) {
     const sake = getSake(item.sakeId);
     if (!sake) return "";
     const photos = item.photos || {};
-    // 自分の写真があればそれ、なければマスタの銘柄画像
     const mainImg = photos.after || photos.before || sake.image_url || "";
+    const zoomable = !!mainImg;
     return `
       <article class="favorite-card" data-sake="${esc(item.sakeId)}">
         <div class="favorite-card__img-wrap">
-          <img class="favorite-card__img" src="${esc(mainImg)}" loading="lazy" onerror="this.style.visibility='hidden'"/>
+          <img class="favorite-card__img ${zoomable ? 'zoomable' : ''}" src="${esc(mainImg)}" loading="lazy" onerror="this.style.visibility='hidden'" data-zoom-src="${esc(mainImg)}"/>
         </div>
         <div class="favorite-card__body">
           <div class="favorite-card__brewery">${esc(sake.brewery)}</div>
@@ -953,13 +985,20 @@ const App = (() => {
     `;
   }
 
-  function wireFavoritesFilter(container) {
-    $$(".favorites-filter .chip", container).forEach((chip) => {
+  function wireFilterPanel(container) {
+    $$(".filter-panel .chip", container).forEach((chip) => {
       chip.addEventListener("click", () => {
-        state.favoritesThreshold = Number(chip.dataset.threshold);
-        renderFavorites(container);
+        state.filterRatingMin = Number(chip.dataset.rating);
+        renderFilter(container);
       });
     });
+    const sel = $(".filter-select", container);
+    if (sel) {
+      sel.addEventListener("change", (e) => {
+        state.filterBreweryId = e.target.value;
+        renderFilter(container);
+      });
+    }
   }
 
   function formatMonth(yyyymm) {
@@ -979,6 +1018,61 @@ const App = (() => {
     const mm = String(d.getMinutes()).padStart(2, "0");
     return `${m}/${day} ${hh}:${mm}`;
   }
+
+  // ============================================================
+  // 写真ライトボックス (画像タップで拡大表示)
+  // ============================================================
+
+  function openLightbox(src) {
+    if (!src) return;
+    const lb = document.getElementById("lightbox");
+    const img = lb.querySelector(".lightbox__img");
+    img.src = src;
+    lb.hidden = false;
+    lb.setAttribute("aria-hidden", "false");
+    // iOSのスクロール固定
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById("lightbox");
+    const img = lb.querySelector(".lightbox__img");
+    lb.hidden = true;
+    lb.setAttribute("aria-hidden", "true");
+    img.src = "";
+    document.body.style.overflow = "";
+  }
+
+  function wireLightbox() {
+    const lb = document.getElementById("lightbox");
+    lb.addEventListener("click", (e) => {
+      // 画像本体以外（背景）タップで閉じる
+      if (e.target.classList.contains("lightbox__img")) return;
+      closeLightbox();
+    });
+    // ESCキーで閉じる
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !lb.hidden) closeLightbox();
+    });
+
+    // 画像クリックの委譲: .zoomable クラスまたは data-zoom-src を持つ img
+    document.addEventListener("click", (e) => {
+      const img = e.target.closest("img");
+      if (!img) return;
+      // 削除ボタンは除外
+      if (e.target.closest(".photo-slot__remove")) return;
+      // ライトボックス内の画像は除外 (連打で閉じない対策)
+      if (img.classList.contains("lightbox__img")) return;
+
+      const zoomSrc = img.dataset.zoomSrc || img.src;
+      if (img.classList.contains("zoomable") && zoomSrc) {
+        e.stopPropagation();
+        openLightbox(zoomSrc);
+      }
+    });
+  }
+
+  // 画像URLはそのまま、サムネ/ラベル画像は必要に応じて拡大用の元画像URLを指定可能にする
 
   // ============================================================
   // 描画: 設定
@@ -1207,6 +1301,9 @@ const App = (() => {
 
     // 設定画面のワイヤリング
     wireSettings();
+
+    // ライトボックス (写真タップで拡大)
+    wireLightbox();
 
     // データ読み込み
     const ok = await loadMaster();
