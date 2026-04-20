@@ -14,6 +14,9 @@ const App = (() => {
     filter: "all",            // all | unread | done | retired
     search: "",
     syncing: false,
+    journalMode: "timeline",    // timeline | favorites
+    favoritesThreshold: 4,      // お気に入りの☆しきい値
+    detailReturnTo: null,       // 詳細から戻る先: "journal" | null (デフォルト: 店舗/ホーム)
   };
 
   // ============================================================
@@ -127,16 +130,30 @@ const App = (() => {
   function showView(name) {
     $$(".view").forEach((v) => v.toggleAttribute("hidden", v.dataset.view !== name));
     const back = $(".header-back");
-    back.toggleAttribute("hidden", name === "home");
+    // 戻るボタンは「このタブ内で階層がある時」だけ表示
+    const showBack = name === "store" || name === "detail";
+    back.toggleAttribute("hidden", !showBack);
     // ヘッダーサブタイトル
     const sub = $("#header-sub");
     if (name === "home") sub.textContent = "ぽんしゅ館";
     else if (name === "settings") sub.textContent = "設定";
+    else if (name === "journal") sub.textContent = "記録";
     else if (name === "store") sub.textContent = getStore(state.currentStoreId)?.name || "";
     else if (name === "detail") {
       const sake = getSake(state.currentSakeId);
       sub.textContent = sake?.brewery || "";
     }
+
+    // 下部タブの選択状態を更新
+    const activeTab =
+      name === "home" || name === "store" || name === "detail" ? "home"
+      : name === "journal" ? "journal"
+      : name === "settings" ? "settings"
+      : "home";
+    $$(".tab-bar__btn").forEach((b) => {
+      b.classList.toggle("tab-bar__btn--active", b.dataset.tab === activeTab);
+    });
+
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
@@ -158,8 +175,13 @@ const App = (() => {
   function goDetail(sakeId) {
     state.currentSakeId = sakeId;
     state.editingRecordId = null;
+    state.detailReturnTo = null;  // 通常ルート (ホーム/店舗) から
     showView("detail");
     renderDetail();
+  }
+  function goJournal() {
+    showView("journal");
+    renderJournal();
   }
   function goSettings() {
     showView("settings");
@@ -169,11 +191,17 @@ const App = (() => {
   function goBack() {
     const current = $$(".view").find((v) => !v.hasAttribute("hidden"))?.dataset.view;
     if (current === "detail") {
-      if (state.currentStoreId) showView("store");
-      else goHome();
+      // 詳細から戻る: 経路を考慮 (店舗経由 or 記録経由 or ホーム)
+      if (state.detailReturnTo === "journal") {
+        goJournal();
+      } else if (state.currentStoreId) {
+        showView("store");
+      } else {
+        goHome();
+      }
       return;
     }
-    if (current === "store" || current === "settings") {
+    if (current === "store") {
       goHome();
       return;
     }
@@ -716,6 +744,243 @@ const App = (() => {
   }
 
   // ============================================================
+  // 描画: 記録 (タイムライン / お気に入り)
+  // ============================================================
+
+  function renderJournal() {
+    const container = $("#journal-content");
+
+    // タブ切替のbutton状態
+    $$(".journal-tab").forEach((b) => {
+      b.classList.toggle("active", b.dataset.journal === state.journalMode);
+    });
+
+    if (state.records.length === 0) {
+      container.innerHTML = `<div class="journal-empty">
+        <p>まだ記録がありません。</p>
+        <p class="journal-empty__sub">ホームから店舗を選んで、初めての一杯を綴りましょう。</p>
+      </div>`;
+      return;
+    }
+
+    if (state.journalMode === "timeline") {
+      renderTimeline(container);
+    } else {
+      renderFavorites(container);
+    }
+  }
+
+  function renderTimeline(container) {
+    // drunk_at 降順ソート
+    const sorted = [...state.records].sort((a, b) =>
+      (b.drunk_at || "").localeCompare(a.drunk_at || "")
+    );
+
+    // 月ごとにグルーピング
+    const months = new Map();  // "2026-04" -> [records]
+    for (const r of sorted) {
+      const key = (r.drunk_at || "").slice(0, 7) || "unknown";
+      if (!months.has(key)) months.set(key, []);
+      months.get(key).push(r);
+    }
+
+    const parts = [`<div class="journal-summary">
+      <span class="journal-summary__num">${state.records.length}</span>
+      <span class="journal-summary__label">杯の記録</span>
+    </div>`];
+
+    for (const [monthKey, records] of months) {
+      const monthLabel = formatMonth(monthKey);
+      const avgRating = records.reduce((s, r) => s + (r.rating || 0), 0) / records.length;
+      parts.push(`
+        <div class="timeline-month">
+          <div class="timeline-month__head">
+            <span class="timeline-month__label">${esc(monthLabel)}</span>
+            <span class="timeline-month__meta">${records.length}杯 ・ 平均 ${"★".repeat(Math.round(avgRating))}</span>
+          </div>
+          <div class="timeline-list">
+            ${records.map((r) => renderTimelineCard(r)).join("")}
+          </div>
+        </div>
+      `);
+    }
+
+    container.innerHTML = parts.join("");
+
+    // カードクリックで銘柄詳細へ (編集可能にする)
+    $$(".timeline-card", container).forEach((card) => {
+      card.addEventListener("click", () => {
+        const sakeId = card.dataset.sake;
+        const recordId = card.dataset.record;
+        state.detailReturnTo = "journal";
+        state.currentSakeId = sakeId;
+        state.editingRecordId = recordId;  // タップで編集モードに直行
+        showView("detail");
+        renderDetail();
+      });
+    });
+  }
+
+  function renderTimelineCard(record) {
+    const sake = getSake(record.sake_id);
+    const store = getStore(record.store);
+    const photos = record.photos || {};
+    const thumbs = [];
+    if (photos.before) thumbs.push(`<img class="timeline-card__thumb" src="${esc(photos.before)}" loading="lazy" onerror="this.style.display='none'"/>`);
+    if (photos.after)  thumbs.push(`<img class="timeline-card__thumb" src="${esc(photos.after)}" loading="lazy" onerror="this.style.display='none'"/>`);
+    const thumbsHtml = thumbs.length ? `<div class="timeline-card__thumbs">${thumbs.join("")}</div>` : "";
+    const rating = record.rating || 0;
+    const memo = record.memo || "";
+
+    // 銘柄がマスタから削除されたレアケース (IDマイグレーション不整合)
+    const sakeName = sake ? `${sake.name}` : `(削除された銘柄: ${record.sake_id})`;
+    const brewery = sake ? sake.brewery : "";
+
+    return `
+      <article class="timeline-card" data-sake="${esc(record.sake_id)}" data-record="${esc(record.id)}">
+        <div class="timeline-card__head">
+          <div class="timeline-card__date">${esc(fmtDateShort(record.drunk_at))}</div>
+          <div class="timeline-card__store">${esc(store?.name || "")}</div>
+        </div>
+        <div class="timeline-card__body">
+          <div class="timeline-card__sake">
+            <div class="timeline-card__brewery">${esc(brewery)}</div>
+            <div class="timeline-card__name">${esc(sakeName)}</div>
+          </div>
+          <div class="timeline-card__rating">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</div>
+        </div>
+        ${memo ? `<div class="timeline-card__memo">${esc(memo)}</div>` : ""}
+        ${thumbsHtml}
+      </article>
+    `;
+  }
+
+  function renderFavorites(container) {
+    const threshold = state.favoritesThreshold;
+
+    // 銘柄ごとに集計: 最高☆, 記録数, 最新メモ, 最新日時
+    const bySake = new Map();  // sake_id -> { maxRating, count, latestMemo, latestDate, bestRecord }
+    for (const r of state.records) {
+      const entry = bySake.get(r.sake_id) || {
+        maxRating: 0,
+        count: 0,
+        latestMemo: "",
+        latestDate: "",
+        photos: null,
+      };
+      entry.count += 1;
+      if ((r.rating || 0) > entry.maxRating) {
+        entry.maxRating = r.rating || 0;
+      }
+      if ((r.drunk_at || "") > entry.latestDate) {
+        entry.latestDate = r.drunk_at || "";
+        entry.latestMemo = r.memo || "";
+        entry.photos = r.photos || null;
+      }
+      bySake.set(r.sake_id, entry);
+    }
+
+    // しきい値以上を抽出
+    const items = [];
+    for (const [sakeId, entry] of bySake) {
+      if (entry.maxRating >= threshold) {
+        items.push({ sakeId, ...entry });
+      }
+    }
+
+    // ☆降順 → 回数降順
+    items.sort((a, b) => {
+      if (b.maxRating !== a.maxRating) return b.maxRating - a.maxRating;
+      return b.count - a.count;
+    });
+
+    const head = `
+      <div class="favorites-filter">
+        <span class="favorites-filter__label">☆評価</span>
+        <button class="chip ${threshold === 3 ? "chip--active" : ""}" data-threshold="3">3以上</button>
+        <button class="chip ${threshold === 4 ? "chip--active" : ""}" data-threshold="4">4以上</button>
+        <button class="chip ${threshold === 5 ? "chip--active" : ""}" data-threshold="5">5のみ</button>
+      </div>
+    `;
+
+    if (items.length === 0) {
+      container.innerHTML = head + `<div class="journal-empty">
+        <p>☆${threshold} 以上の記録はまだありません。</p>
+      </div>`;
+      wireFavoritesFilter(container);
+      return;
+    }
+
+    container.innerHTML = head + `
+      <div class="favorites-list">
+        ${items.map((it) => renderFavoriteCard(it)).join("")}
+      </div>
+    `;
+
+    // 銘柄カードタップで詳細へ
+    $$(".favorite-card", container).forEach((card) => {
+      card.addEventListener("click", () => {
+        state.detailReturnTo = "journal";
+        state.currentSakeId = card.dataset.sake;
+        state.editingRecordId = null;
+        showView("detail");
+        renderDetail();
+      });
+    });
+
+    wireFavoritesFilter(container);
+  }
+
+  function renderFavoriteCard(item) {
+    const sake = getSake(item.sakeId);
+    if (!sake) return "";
+    const photos = item.photos || {};
+    // 自分の写真があればそれ、なければマスタの銘柄画像
+    const mainImg = photos.after || photos.before || sake.image_url || "";
+    return `
+      <article class="favorite-card" data-sake="${esc(item.sakeId)}">
+        <div class="favorite-card__img-wrap">
+          <img class="favorite-card__img" src="${esc(mainImg)}" loading="lazy" onerror="this.style.visibility='hidden'"/>
+        </div>
+        <div class="favorite-card__body">
+          <div class="favorite-card__brewery">${esc(sake.brewery)}</div>
+          <div class="favorite-card__name">${esc(sake.name)}</div>
+          <div class="favorite-card__rating">${"★".repeat(item.maxRating)}${"☆".repeat(5 - item.maxRating)}</div>
+          ${item.count > 1 ? `<div class="favorite-card__count">${item.count}回記録</div>` : ""}
+          ${item.latestMemo ? `<div class="favorite-card__memo">${esc(item.latestMemo)}</div>` : ""}
+        </div>
+      </article>
+    `;
+  }
+
+  function wireFavoritesFilter(container) {
+    $$(".favorites-filter .chip", container).forEach((chip) => {
+      chip.addEventListener("click", () => {
+        state.favoritesThreshold = Number(chip.dataset.threshold);
+        renderFavorites(container);
+      });
+    });
+  }
+
+  function formatMonth(yyyymm) {
+    // "2026-04" -> "2026年 4月"
+    if (!yyyymm || yyyymm === "unknown") return "日時不明";
+    const [y, m] = yyyymm.split("-");
+    return `${y}年 ${parseInt(m, 10)}月`;
+  }
+
+  function fmtDateShort(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${m}/${day} ${hh}:${mm}`;
+  }
+
+  // ============================================================
   // 描画: 設定
   // ============================================================
 
@@ -902,11 +1167,20 @@ const App = (() => {
   async function init() {
     // ヘッダーナビゲーション
     $(".header-back").addEventListener("click", goBack);
-    $(".header-settings").addEventListener("click", goSettings);
 
     // タイトルクリックでホームへ
     $(".header-title").addEventListener("click", goHome);
     $(".header-title").style.cursor = "pointer";
+
+    // 下部タブバー
+    $$(".tab-bar__btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        if (tab === "home") goHome();
+        else if (tab === "journal") goJournal();
+        else if (tab === "settings") goSettings();
+      });
+    });
 
     // 店舗一覧のフィルタ
     $$(".filter-tab").forEach((tab) => {
@@ -921,6 +1195,14 @@ const App = (() => {
     $("#search-input").addEventListener("input", (e) => {
       state.search = e.target.value;
       renderStore();
+    });
+
+    // ジャーナルのタブ切り替え (タイムライン/お気に入り)
+    $$(".journal-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        state.journalMode = tab.dataset.journal;
+        renderJournal();
+      });
     });
 
     // 設定画面のワイヤリング
