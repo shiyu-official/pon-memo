@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19",
+  "updated_at": "2026-05-01",
   "stores": [
     {
       "id": "niigata",
@@ -24,15 +24,18 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "013"
+          "number": "013",
+          "retired_at": "2026-05-01"
         },
         {
           "store": "nagaoka",
-          "number": "013"
+          "number": "013",
+          "retired_at": "2026-05-01"
         },
         {
           "store": "yuzawa",
-          "number": "013"
+          "number": "013",
+          "retired_at": "2026-05-01"
         }
       ]
     },
@@ -45,7 +48,8 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "102"
+          "number": "102",
+          "retired_at": "2026-05-01"
         }
       ]
     },
@@ -58,15 +62,18 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "107"
+          "number": "107",
+          "retired_at": "2026-05-01"
         },
         {
           "store": "nagaoka",
-          "number": "098"
+          "number": "098",
+          "retired_at": "2026-05-01"
         },
         {
           "store": "yuzawa",
-          "number": "090"
+          "number": "090",
+          "retired_at": "2026-05-01"
         }
       ]
     },
@@ -79,11 +86,13 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "100"
+          "number": "100",
+          "retired_at": "2026-05-01"
         },
         {
           "store": "nagaoka",
-          "number": "100"
+          "number": "100",
+          "retired_at": "2026-05-01"
         }
       ]
     },
@@ -96,7 +105,8 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "101"
+          "number": "101",
+          "retired_at": "2026-05-01"
         }
       ]
     },
@@ -1132,6 +1142,91 @@
         {
           "store": "yuzawa",
           "number": "045"
+        }
+      ]
+    },
+    {
+      "id": "sake-0159",
+      "brewery": "新潟一粒酒造",
+      "name": "嘉山",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2019/10/3fbd6a21a2f90d016b49f6020ca07fc9.jpg",
+      "first_seen": "2026-05-01",
+      "available_at": [
+        {
+          "store": "niigata",
+          "number": "013"
+        },
+        {
+          "store": "nagaoka",
+          "number": "013"
+        },
+        {
+          "store": "yuzawa",
+          "number": "013"
+        }
+      ]
+    },
+    {
+      "id": "sake-0162",
+      "brewery": "新潟一粒酒造",
+      "name": "悠天",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/02/66d4131f37b137a8a48d5d64529f7f95.jpg",
+      "first_seen": "2026-05-01",
+      "available_at": [
+        {
+          "store": "niigata",
+          "number": "102"
+        }
+      ]
+    },
+    {
+      "id": "sake-0163",
+      "brewery": "新潟一粒酒造",
+      "name": "越乃梅里",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2022/09/107-2.png",
+      "first_seen": "2026-05-01",
+      "available_at": [
+        {
+          "store": "niigata",
+          "number": "107"
+        },
+        {
+          "store": "nagaoka",
+          "number": "098"
+        },
+        {
+          "store": "yuzawa",
+          "number": "090"
+        }
+      ]
+    },
+    {
+      "id": "sake-0160",
+      "brewery": "新潟一粒酒造",
+      "name": "越乃梅里 五百万石",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/02/2e0f2009c967e7f0325559df4deeabe9.jpg",
+      "first_seen": "2026-05-01",
+      "available_at": [
+        {
+          "store": "niigata",
+          "number": "100"
+        },
+        {
+          "store": "nagaoka",
+          "number": "100"
+        }
+      ]
+    },
+    {
+      "id": "sake-0161",
+      "brewery": "新潟一粒酒造",
+      "name": "越乃梅里 瑠璃",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/02/e6afe92942f54c7c14571680e0a8f8c0.jpg",
+      "first_seen": "2026-05-01",
+      "available_at": [
+        {
+          "store": "niigata",
+          "number": "101"
         }
       ]
     },
