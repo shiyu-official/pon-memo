@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-01",
+  "updated_at": "2026-07-01",
   "stores": [
     {
       "id": "niigata",
@@ -515,6 +515,19 @@
       ]
     },
     {
+      "id": "sake-0170",
+      "brewery": "八海醸造",
+      "name": "八海山 生詰",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2024/06/6caddddf161db46415b4ac4937c3c09e.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "067"
+        }
+      ]
+    },
+    {
       "id": "sake-0027",
       "brewery": "八海醸造",
       "name": "八海山の原酒で仕込んだ うめ酒",
@@ -537,6 +550,19 @@
         {
           "store": "nagaoka",
           "number": "109"
+        }
+      ]
+    },
+    {
+      "id": "sake-0173",
+      "brewery": "八海醸造",
+      "name": "魚沼で候",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2025/10/2ec404ca6a436312191a66e2abb6a5c4.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "105"
         }
       ]
     },
@@ -791,7 +817,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "041"
+          "number": "041",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -804,7 +831,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "111"
+          "number": "111",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -1000,7 +1028,8 @@
         },
         {
           "store": "yuzawa",
-          "number": "068"
+          "number": "068",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -1892,7 +1921,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "103"
+          "number": "103",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -2672,7 +2702,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "067"
+          "number": "067",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -2702,7 +2733,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "105"
+          "number": "105",
+          "retired_at": "2026-07-01"
         }
       ]
     },
@@ -2737,6 +2769,19 @@
         {
           "store": "yuzawa",
           "number": "107"
+        }
+      ]
+    },
+    {
+      "id": "sake-0169",
+      "brewery": "青木酒造",
+      "name": "雪男 愛山",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2022/09/fbd3001ff34df0a422059524aa153360.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "041"
         }
       ]
     },
@@ -2779,6 +2824,32 @@
         {
           "store": "yuzawa",
           "number": "104"
+        }
+      ]
+    },
+    {
+      "id": "sake-0171",
+      "brewery": "青木酒造",
+      "name": "鶴齢 漆黒",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/06/9e881e167b00af7442f10f6f675a1c8b.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "068"
+        }
+      ]
+    },
+    {
+      "id": "sake-0174",
+      "brewery": "頚城酒造",
+      "name": "久比岐 ふぞろい",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/06/6b3d0106b083d8417f0791f6575b7031.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "111"
         }
       ]
     },
@@ -2868,6 +2939,19 @@
         {
           "store": "yuzawa",
           "number": "060"
+        }
+      ]
+    },
+    {
+      "id": "sake-0172",
+      "brewery": "高千代酒造",
+      "name": "高千代 AQUAMARINE",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/06/1f7fe396aa1fab8e4acb1014cb001a44.jpg",
+      "first_seen": "2026-07-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "103"
         }
       ]
     },
