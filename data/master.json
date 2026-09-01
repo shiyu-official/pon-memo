@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-01",
+  "updated_at": "2026-09-01",
   "stores": [
     {
       "id": "niigata",
@@ -879,6 +879,19 @@
       ]
     },
     {
+      "id": "sake-0189",
+      "brewery": "吉乃川",
+      "name": "吉乃川 ひやおろし",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2024/09/f4dbdedf9e951547b20ba1debe395acc.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "041"
+        }
+      ]
+    },
+    {
       "id": "sake-0165",
       "brewery": "吉乃川",
       "name": "吉乃川 雪中貯蔵",
@@ -958,6 +971,19 @@
         {
           "store": "yuzawa",
           "number": "082"
+        }
+      ]
+    },
+    {
+      "id": "sake-0195",
+      "brewery": "君の井酒造",
+      "name": "君の井 梅酒",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/02/1faaa285c06aa9835a71239b90a22846.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "124"
         }
       ]
     },
@@ -1441,6 +1467,32 @@
       ]
     },
     {
+      "id": "sake-0190",
+      "brewery": "新潟銘醸",
+      "name": "デリシャス長さん",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2023/09/4d6562b7bc8fa46e9752ba57ca81109a.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "67"
+        }
+      ]
+    },
+    {
+      "id": "sake-0194",
+      "brewery": "新潟銘醸",
+      "name": "ネイビー長さん 火入れ原酒",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/08/df1288e490a75b02ac0730e55b20d1f6.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "111"
+        }
+      ]
+    },
+    {
       "id": "sake-0166",
       "brewery": "新潟銘醸",
       "name": "ブラック長さん 火入れ原酒",
@@ -1449,7 +1501,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "067"
+          "number": "067",
+          "retired_at": "2026-09-01"
         }
       ]
     },
@@ -2140,7 +2193,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "108"
+          "number": "108",
+          "retired_at": "2026-09-01"
         }
       ]
     },
@@ -3023,6 +3077,19 @@
       ]
     },
     {
+      "id": "sake-0192",
+      "brewery": "青木酒造",
+      "name": "鶴齢 露草色",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/07/12bbf3c6a9afde4f678981031c4f98bc.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "106"
+        }
+      ]
+    },
+    {
       "id": "sake-0174",
       "brewery": "頚城酒造",
       "name": "久比岐 ふぞろい",
@@ -3031,7 +3098,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "111"
+          "number": "111",
+          "retired_at": "2026-09-01"
         }
       ]
     },
@@ -3125,6 +3193,19 @@
       ]
     },
     {
+      "id": "sake-0191",
+      "brewery": "高千代酒造",
+      "name": "高千代 AKIAGARI",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2024/09/1bb0ff130260d53672606e34cef832b0.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "103"
+        }
+      ]
+    },
+    {
       "id": "sake-0172",
       "brewery": "高千代酒造",
       "name": "高千代 AQUAMARINE",
@@ -3133,7 +3214,21 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "103"
+          "number": "103",
+          "retired_at": "2026-09-01"
+        }
+      ]
+    },
+    {
+      "id": "sake-0193",
+      "brewery": "高千代酒造",
+      "name": "高千代 一本〆",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/03/265e532bda9f45f23f33064920f119da.jpg",
+      "first_seen": "2026-09-01",
+      "available_at": [
+        {
+          "store": "yuzawa",
+          "number": "108"
         }
       ]
     },
@@ -3263,7 +3358,8 @@
       "available_at": [
         {
           "store": "yuzawa",
-          "number": "124"
+          "number": "124",
+          "retired_at": "2026-09-01"
         }
       ]
     },
