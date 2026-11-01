@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-01",
+  "updated_at": "2026-11-01",
   "stores": [
     {
       "id": "niigata",
@@ -119,7 +119,7 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "105"
+          "number": "020"
         },
         {
           "store": "nagaoka",
@@ -746,7 +746,8 @@
       "available_at": [
         {
           "store": "nagaoka",
-          "number": "108"
+          "number": "108",
+          "retired_at": "2026-11-01"
         }
       ]
     },
@@ -804,6 +805,14 @@
       "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2024/03/f11c0c55c6388f27b5c3d1ed8c08d08a.jpg",
       "first_seen": "2026-04-18",
       "available_at": [
+        {
+          "store": "niigata",
+          "number": "105"
+        },
+        {
+          "store": "nagaoka",
+          "number": "108"
+        },
         {
           "store": "yuzawa",
           "number": "096"
@@ -914,6 +923,19 @@
       ]
     },
     {
+      "id": "sake-0207",
+      "brewery": "吉乃川",
+      "name": "吉乃川 清流美",
+      "image_url": "https://www.ponshukan.com/wp/wp-content/uploads/2026/10/eff37ae28db713570b858b539b111363.jpg",
+      "first_seen": "2026-11-01",
+      "available_at": [
+        {
+          "store": "nagaoka",
+          "number": "042"
+        }
+      ]
+    },
+    {
       "id": "sake-0165",
       "brewery": "吉乃川",
       "name": "吉乃川 雪中貯蔵",
@@ -967,7 +989,8 @@
         },
         {
           "store": "nagaoka",
-          "number": "042"
+          "number": "042",
+          "retired_at": "2026-11-01"
         },
         {
           "store": "yuzawa",
@@ -1631,7 +1654,8 @@
       "available_at": [
         {
           "store": "niigata",
-          "number": "020"
+          "number": "020",
+          "retired_at": "2026-11-01"
         },
         {
           "store": "nagaoka",
